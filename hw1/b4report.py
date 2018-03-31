@@ -98,13 +98,13 @@ def do_line(testcase, f):
 	#opt_ratio = opt_cost / totalcost
 	opt_ratio = totalcost / opt_cost
 
-	line = "\t".join([testcase] + list(map(str, [own_ratio, lp_ratio, opt_ratio]))) + "\n"
+	line = ",".join([testcase] + list(map(str, [own_ratio, lp_ratio, opt_ratio]))) + "\n"
 
 	f.write(line)
 
 def main():
 
-	with open("results.out", "w+") as f:
+	with open("results2.out", "w+") as f:
 
 		for i in range(1,10):
 
