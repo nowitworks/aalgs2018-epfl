@@ -1,6 +1,7 @@
 package karger
 
-class Node(id: Int) {
+// Union-find
+class Node(val id: Int) {
   var parent = this
   var rank = 0
 
@@ -36,30 +37,53 @@ object Node {
   }
 }
 
-object App {
-  // Problem: this was not really running multiple times.
-  // Idea: Divide responsibilities cleanly into a Spec and a Solver, so that we
-  // can run the Solver multiple times on the same Spec
+class Spec {
+  def read = readLine.split(" ").map(_.toInt)
 
-  def main(args: Array[String]): Unit = {
-    def read = readLine.split(" ").map(_.toInt)
+  val Array(n, m) = read
+  val edges = for (_ <- 1 to m) yield {
+    val Array(u, v) = read
+    (u, v)
+  }
+}
 
-    val Array(n, m) = read
+class Solver(spec: Spec) {
+  val vertices = for (i <- 1 to spec.n) yield new Node(i)
+  val edges = scala.util.Random.shuffle {
+    for ((u, v) <- spec.edges) yield {
+      (vertices(u - 1), vertices(v - 1))
+    }
+  }.toList
 
-    val vertices = for (i <- 1 to n) yield new Node(i)
-    val edges = scala.util.Random.shuffle {
-      for (i <- 1 to m) yield {
-        val Array(u, v) = read
-        (vertices(u - 1), vertices(v - 1))
+  def run(): Set[(Int, Int)] = {
+    for ((u, v) <- edges.take(spec.n - 2)) {
+      if (u.findSet() != v.findSet()) {
+        // Edge contraction
+        u ++ v
       }
     }
 
-    for ((u, v) <- edges.take(n - 2); if u.findSet() != v.findSet()) {
-      u ++ v
+    val cut = for {
+      (u, v) <- edges.drop(spec.n - 2)
+      if u.findSet() != v.findSet()
+    } yield (u.id, v.id)
+
+    cut.toSet
+  }
+
+}
+
+object App {
+  def main(args: Array[String]): Unit = {
+    val spec = new Spec()
+    val n = spec.n
+
+    val cuts = for (_ <- 1 to (n * n * math.ceil(7 * math.log(n)).toInt)) yield {
+      val solver = new Solver(spec)
+      solver.run()
     }
 
-    val cut = edges.drop(n - 2).filter((x: (Node, Node)) => x._1.findSet() != x._2.findSet())
-    println(cut.size)
+    println(cuts.map(_.size).min)
   }
 }
 
