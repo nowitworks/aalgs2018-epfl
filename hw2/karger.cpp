@@ -1,55 +1,74 @@
 #include <iostream>
 #include <memory>
 
+#include <cassert>
 
 template <typename T>
 class set {
 public:
-  T t;
-  std::shared_ptr<set> parent;
-  int rank;
+  set(T x): _tag(x), _rank(0) {
+    _parent = std::make_shared(this);
+  }
 
-  // make-set
-  set(T &t): t(t), rank(0), parent(std::make_shared(this)) {
+  T &parent() const {
+    return *_parent;
+  }
+
+  int rank() const {
+    return _rank;
   }
 
   void link(set &that) {
-    if (this->rank > that->rank) {
-      that->parent = std::make_shared(this);
+    if (this->rank() > that->rank()) {
+      that->parent(this);
     } else {
-      this->parent = std::make_shared(that);
+      this->parent(that);
 
-      if (this->rank == this->rank) {
-        that->rank = this->rank + 1;
+      if (this->rank() == that->rank()) {
+        that.inc_rank();
       }
     }
   }
 
-  // union
   void set_union(set &that) {
     find_set(this).link(find_set(that));
   }
 
-  // find-set
   set &find_set() const {
-    if (this != *parent) {
-      parent = std::make_shared(parent->find_set());
+    if (this != parent()) {
+      parent(parent()->find_set());
     }
-    return *parent;
+    return parent();
+  }
+
+private:
+  T _tag;
+  std::shared_ptr<set> _parent;
+  int _rank;
+
+  void parent(T &p) {
+    this->_parent = std::make_shared<T>(p);
+  }
+
+  void inc_rank() {
+    _rank++;
   }
 
 };
 
 int main () {
-  std::cout << "Hello world!" << std::endl;
+  // int nedges, nvertices;
 
-  int nedges, nvertices;
-
-  std::cin >> nvertices;
-  std::cin >> nedges;
+  // std::cin >> nvertices;
+  // std::cin >> nedges;
 
 
-  std::cout << nvertices << nedges << std::endl;
+  // std::cout << nvertices << nedges << std::endl;
+
+  set<int> s1(0);
+  set<int> s2(1);
+
+
 
   return 0;
 }
