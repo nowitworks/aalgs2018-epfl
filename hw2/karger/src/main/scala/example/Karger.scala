@@ -1,14 +1,18 @@
+import scala.collection.mutable.HashSet
+
 object Karger extends App {
   val spec = new Spec()
   val n = spec.n
   val times = n * n * math.ceil(math.log(n)).toInt // O(n^2 * log(n))
 
-  val cuts: Set[Set[(Int, Int)]] = List.fill(times) {
+  val cuts: HashSet[Set[(Int, Int)]] = HashSet()
+
+  for (_ <- 1 to times) {
     val solver = new Solver(spec)
     val cut = solver.run()
 
-    cut
-  }.toSet
+    cuts += cut
+  }
 
   val minSize = cuts.minBy(_.size).size
   val count   = cuts.count(_.size == minSize)
