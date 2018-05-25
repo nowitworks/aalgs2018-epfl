@@ -1,4 +1,20 @@
-package karger
+object Karger extends App {
+  val spec = new Spec()
+  val n = spec.n
+  val times = n * n * math.ceil(math.log(n)).toInt // O(n^2 * log(n))
+
+  val cuts: Set[Set[(Int, Int)]] = List.fill(times) {
+    val solver = new Solver(spec)
+    val cut = solver.run()
+
+    cut
+  }.toSet
+
+  val minSize = cuts.minBy(_.size).size
+  val count   = cuts.count(_.size == minSize)
+
+  println(minSize + " " + count)
+}
 
 // Union-find
 class Node(val id: Int) {
@@ -38,7 +54,7 @@ object Node {
 }
 
 class Spec {
-  def read = readLine.split(" ").map(_.toInt)
+  def read = io.StdIn.readLine.split(" ").map(_.toInt)
 
   val Array(n, m) = read
   val edges = for (_ <- 1 to m) yield {
@@ -49,41 +65,35 @@ class Spec {
 
 class Solver(spec: Spec) {
   val vertices = for (i <- 1 to spec.n) yield new Node(i)
-  val edges = scala.util.Random.shuffle {
-    for ((u, v) <- spec.edges) yield {
-      (vertices(u - 1), vertices(v - 1))
-    }
-  }.toList
+
+  var edges = for ((u, v) <- spec.edges.toList) yield {
+    (vertices(u - 1), vertices(v - 1))
+  }
 
   def run(): Set[(Int, Int)] = {
-    for ((u, v) <- edges.take(spec.n - 2)) {
-      if (u.findSet() != v.findSet()) {
-        // Edge contraction
-        u ++ v
-      }
+    for (_ <- 1 to spec.n - 2) {
+      val (u, v) = pickEdge()
+      u ++ v
+      removeLoops()
     }
 
-    val cut = for {
-      (u, v) <- edges.drop(spec.n - 2)
-      if u.findSet() != v.findSet()
-    } yield (u.id, v.id)
-
-    cut.toSet
+    edges.map(x => (x._1.id, x._2.id)).toSet
   }
 
-}
+  private def pickEdge(): (Node, Node) = {
+    val probabilities = List.tabulate(spec.m) { (x: Int) => 1.0 / (x + 1.0) }
+    val dummy = (new Node(0), new Node(0))
 
-object App {
-  def main(args: Array[String]): Unit = {
-    val spec = new Spec()
-    val n = spec.n
-
-    val cuts = for (_ <- 1 to (n * n * math.ceil(7 * math.log(n)).toInt)) yield {
-      val solver = new Solver(spec)
-      solver.run()
+    edges.zip(probabilities).foldLeft(dummy) {
+      case (z, (e, p)) => if (util.Random.nextDouble() <= p) e else z
     }
-
-    println(cuts.map(_.size).min)
   }
+
+  private def removeLoops() {
+    edges = edges filter {
+      x => x._1.findSet() != x._2.findSet()
+    }
+  }
+
 }
 
