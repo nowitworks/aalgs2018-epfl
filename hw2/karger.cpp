@@ -76,8 +76,7 @@ struct solver {
   std::vector<int> pi;
 
   // Cut
-  std::vector<int> solution_src;
-  std::vector<int> solution_dst;
+  std::set<std::set<int>> solution;
 
   solver() {
     std::cin >> n;
@@ -103,8 +102,7 @@ struct solver {
   void run() {
     std::random_shuffle(std::begin(pi), std::end(pi));
 
-    solution_src.clear();
-    solution_dst.clear();
+    solution.clear();
 
     sets vertices(n);
 
@@ -121,26 +119,19 @@ struct solver {
       int u = src[pi[i]], v = dst[pi[i]];
 
       if (vertices.find(u - 1) != vertices.find(v - 1)) {
-        solution_src.push_back(u);
-        solution_dst.push_back(v);
+        solution.insert(std::set<int>{u, v});
       }
     }
   }
 };
 
-// FIXME
-std::size_t hash_cut(std::vector<int> const &src, std::vector<int> const &dst) {
-  std::vector<size_t> indexes(src.size());
-  std::iota(std::begin(indexes), std::end(indexes), 0);
-  std::sort(indexes.begin(), indexes.end(), [&](auto &i, auto &j) {
-      return src[i] < src[j] && dst[i] < dst[j];
-    });
+std::size_t hash_cut(std::set<std::set<int>> const &sol) {
+  std::size_t seed = sol.size();
 
-  std::size_t seed = src.size();
-
-  for(size_t i = 0; i < src.size(); i++) {
-    seed ^= src[indexes[i]] + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    seed ^= dst[indexes[i]] + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  for (auto &i: sol) {
+    for (auto &j: i) {
+      seed ^= j + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
   }
 
   return seed;
@@ -149,7 +140,7 @@ std::size_t hash_cut(std::vector<int> const &src, std::vector<int> const &dst) {
 int main () {
   solver solver;
   int n = solver.n;
-  double constant = 1;
+  double constant = 5;
   int iterations = n * n * ceil(constant * log(n));
 
   std::unordered_map<std::size_t, int> sizes;
@@ -158,8 +149,8 @@ int main () {
   for (int i = 0; i < iterations; i++) {
     solver.run();
 
-    auto key = hash_cut(solver.solution_src, solver.solution_dst);
-    sizes[key] = solver.solution_src.size();
+    auto key = hash_cut(solver.solution);
+    sizes[key] = solver.solution.size();
   }
 
   int min_size = std::min_element(std::begin(sizes), std::end(sizes), [&](auto &l, auto &r) -> bool {
