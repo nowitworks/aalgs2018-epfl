@@ -33,26 +33,12 @@ def mod_mul(x, y, p=prime):
 	return (x*y) % p
 
 
-def mod_mul_s(*numbers, p=prime):
-	result = 1 % p
-	
-	for n in numbers:
-		result = mod_mul(result, n, p)
-
-	return result
-
-
 def mod_div(x ,y, p=prime):
 	return mod_mul(x, mod_inv(y, p), p)
 
 
 def mod_add(x, y, p=prime):
 	return (x + y) % p
-
-
-def print_matrix(m):
-	for l in m:
-		print(l)
 
 
 def build_matrix(n, edges, field_size=prime):
@@ -75,23 +61,18 @@ def gauss_el(matrix, p=prime):
 	
 	for i in range(n):
 
-		# print(i,".1")
-		# print_matrix(M)
-
 		# Find max in column
-		# TODO: replace abs with mod
-		max_el = abs(M[i][i])
+		max_el = M[i][i] % p
 		max_row = i
 		for k in range(i+1,n):
-			if abs(M[k][i]) > max_el:
-				max_el = abs(M[k][i])
+			if M[k][i] % p > max_el:
+				max_el = M[k][i] % p
 				max_row = k
-		
 		
 		# Swap max with current row
 		M[max_row], M[i] = M[i], M[max_row]
 		
-		# Zero all below current row in column
+		# Zero this whole column below current row
 		for k in range(i+1,n):
 			c = - mod_div(M[k][i], M[i][i], p)
 			for j in range(i, n):
@@ -110,23 +91,16 @@ def det_is_not_0(g_matrix):
 	return True
 
 
-
 def main():
 	n, m, edges = read_input()
 
-	repetitions = 1
+	M = build_matrix(n, edges, prime)	
+	M = gauss_el(M, prime)
 
-	for __ in range(repetitions):
-		M = build_matrix(n, edges, prime)
-		
-		M = gauss_el(M, prime)
-
-		if det_is_not_0(M):
-			print("YES")
-			return
-
-	print("NO")
-
+	if det_is_not_0(M):
+		print("YES")
+	else:
+		print("NO")
 
 
 if __name__ == "__main__":
