@@ -1,74 +1,90 @@
 #include <iostream>
-#include <memory>
+#include <vector>
 
-#include <cassert>
+struct subset {
+  int parent;
+  int rank;
+};
 
-template <typename T>
-class set {
+class sets {
+  std::vector<subset> _subsets;
 public:
-  set(T x): _tag(x), _rank(0) {
-    _parent = std::make_shared(this);
+  sets(int n) {
+    for (int i = 0; i < n; i++) {
+      _subsets[i].parent = i;
+      _subsets[i].rank = 0;
+    }
   }
 
-  T &parent() const {
-    return *_parent;
+  int rank(int x) const {
+    return _subsets[x].rank;
   }
 
-  int rank() const {
-    return _rank;
+  void rank(int x, int r) {
+    _subsets[x].rank = r;
   }
 
-  void link(set &that) {
-    if (this->rank() > that->rank()) {
-      that->parent(this);
+  int parent(int x) const {
+    return _subsets[x].parent;
+  }
+
+  void parent(int x, int p) {
+    _subsets[x].parent = p;
+  }
+
+  void set_union(int x, int y) {
+    x = find(x);
+    y = find(y);
+
+    if (rank(x) == rank(y)) {
+      parent(y, x);
     } else {
-      this->parent(that);
-
-      if (this->rank() == that->rank()) {
-        that.inc_rank();
-      }
+      parent(x, y);
+        if (rank(x) == rank(y)) {
+          rank(y, rank(y) + 1);
+        }
     }
   }
 
-  void set_union(set &that) {
-    find_set(this).link(find_set(that));
-  }
-
-  set &find_set() const {
-    if (this != parent()) {
-      parent(parent()->find_set());
+  int find(int x) {
+    if (x != parent(x)) {
+      parent(x, find(parent(x)));
     }
-    return parent();
+
+    return parent(x);
   }
+};
 
-private:
-  T _tag;
-  std::shared_ptr<set> _parent;
-  int _rank;
+struct spec {
+  int n, m;
 
-  void parent(T &p) {
-    this->_parent = std::make_shared<T>(p);
+  // Edges
+  std::vector<int> src;
+  std::vector<int> dst;
+
+  spec() {
+    std::cin >> n;
+    std::cin >> m;
+
+    src.reserve(m);
+    dst.reserve(m);
+
+    for (int i = 0; i < m; i++) {
+      std::cin >> src[i];
+      std::cin >> dst[i];
+    }
   }
-
-  void inc_rank() {
-    _rank++;
-  }
-
 };
 
 int main () {
-  // int nedges, nvertices;
+  spec s;
 
-  // std::cin >> nvertices;
-  // std::cin >> nedges;
+  std::cout << s.n << " " << s.m << "\n";
 
+  for (int i = 0; i < s.m; i++) {
+    std::cout << "(" << s.src[i] << "," << s.dst[i] << ")";
+  }
 
-  // std::cout << nvertices << nedges << std::endl;
-
-  set<int> s1(0);
-  set<int> s2(1);
-
-
-
+  std::cout << std::endl;
   return 0;
 }
