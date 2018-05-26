@@ -8,6 +8,9 @@
 #include <utility>
 #include <vector>
 
+using edge = std::set<int>;
+using cut = std::multiset<edge>;
+
 struct subset {
   int parent;
   int rank;
@@ -20,9 +23,7 @@ struct sets {
     ss.reserve(n);
 
     for (int i = 0; i < n; i++) {
-      // FIXME
-      ss[i].parent = i;
-      ss[i].rank = 0;
+      ss.push_back({ i, 0 });
     }
   }
 
@@ -76,7 +77,7 @@ struct solver {
   std::vector<int> pi;
 
   // Cut
-  std::set<std::set<int>> solution;
+  cut solution;
 
   solver() {
     std::cin >> n;
@@ -125,41 +126,33 @@ struct solver {
   }
 };
 
-std::size_t hash_cut(std::set<std::set<int>> const &sol) {
-  std::size_t seed = sol.size();
-
-  for (auto &i: sol) {
-    for (auto &j: i) {
-      seed ^= j + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    }
-  }
-
-  return seed;
-}
-
 int main () {
   solver solver;
   int n = solver.n;
-  double constant = 5;
+  double constant = 2;
   int iterations = n * n * ceil(constant * log(n));
 
-  std::unordered_map<std::size_t, int> sizes;
+  std::unordered_map<int, std::set<cut>> sizes;
   sizes.reserve(iterations);
 
   for (int i = 0; i < iterations; i++) {
     solver.run();
 
-    auto key = hash_cut(solver.solution);
-    sizes[key] = solver.solution.size();
+    auto cut_size = solver.solution.size();
+    auto it = sizes.find(cut_size);
+
+    if (it != sizes.end()) {
+      it->second.insert(solver.solution);
+    } else {
+      sizes[cut_size] = std::set<cut> { solver.solution };
+    }
   }
 
   int min_size = std::min_element(std::begin(sizes), std::end(sizes), [&](auto &l, auto &r) -> bool {
-      return l.second < r.second;
-    })->second;
+      return l.first < r.first;
+    })->first;
 
-  int count = std::count_if(std::begin(sizes), std::end(sizes), [&](auto &x) -> bool {
-      return x.second == min_size;
-    });
+  int count = sizes[min_size].size();
 
   std::cout << min_size << " " << count << std::endl;
 
