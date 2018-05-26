@@ -130,24 +130,16 @@ struct solver {
 
 // FIXME
 std::size_t hash_cut(std::vector<int> const &src, std::vector<int> const &dst) {
-  std::vector<size_t> indexes;
-  indexes.reserve(src.size());
-
-  for (size_t i = 0; i != src.size(); ++i) {
-    indexes.push_back(i);
-  }
-
+  std::vector<size_t> indexes(src.size());
+  std::iota(std::begin(indexes), std::end(indexes), 0);
   std::sort(indexes.begin(), indexes.end(), [&](auto &i, auto &j) {
-      return src[i] < src[j];
+      return src[i] < src[j] && dst[i] < dst[j];
     });
 
   std::size_t seed = src.size();
 
   for(size_t i = 0; i < src.size(); i++) {
     seed ^= src[indexes[i]] + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-  }
-
-  for(size_t i = 0; i < src.size(); i++) {
     seed ^= dst[indexes[i]] + 0x9e3779b9 + (seed << 6) + (seed >> 2);
   }
 
