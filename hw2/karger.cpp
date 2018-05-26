@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <numeric>
+#include <set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -18,6 +19,7 @@ struct sets {
     ss.reserve(n);
 
     for (int i = 0; i < n; i++) {
+      // FIXME
       ss[i].parent = i;
       ss[i].rank = 0;
     }
@@ -85,15 +87,23 @@ struct solver {
     pi.reserve(m);
 
     for (int i = 0; i < m; i++) {
-      std::cin >> src[i];
-      std::cin >> dst[i];
-      pi[i] = i;
-    }
+      int s, d;
 
+      std::cin >> s;
+      std::cin >> d;
+
+      src.push_back(s);
+      dst.push_back(d);
+
+      pi.push_back(i);
+    }
   }
 
   void run() {
     std::random_shuffle(std::begin(pi), std::end(pi));
+
+    solution_src.clear();
+    solution_dst.clear();
 
     sets vertices(n);
 
@@ -117,25 +127,45 @@ struct solver {
   }
 };
 
+// FIXME: Takes account order of vectors
+std::size_t hash_cut(std::vector<int> const &src, std::vector<int> const &dst) {
+  std::size_t seed = src.size();
+
+  for(auto &i: src) {
+    seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  for(auto &i: dst) {
+    seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  return seed;
+}
+
 int main () {
   solver solver;
   int n = solver.n;
 
-  // using cut = std::pair<std::vector<int>, std::vector<int>>;
-  // std::unordered_map<cut, int> sizes;
-
-  std::vector<int> sizes;
+  std::unordered_map<std::size_t, int> sizes;
   sizes.reserve(n * n * ceil(log(n)));
 
   for (int i = 0; i < n * n * ceil(log(n)); i++) {
     solver.run();
-    sizes[i] = solver.solution_src.size();
 
-    // auto cut_ = std::make_pair(solver.solution_src, solver.solution_dst);
-    // sizes[cut_] = solver.solution_src.size();
+    auto key = hash_cut(solver.solution_src, solver.solution_dst);
+    sizes[key ] = solver.solution_src.size();
   }
 
-  std::cout << *std::min_element(std::begin(sizes), std::end(sizes)) << std::endl;
+  int min_size = std::min_element(std::begin(sizes), std::end(sizes), [&](auto &l, auto &r) -> bool {
+      return l.second < r.second;
+    })->second;
+
+  int count = std::count_if(std::begin(sizes), std::end(sizes), [&](auto &x) -> bool {
+      return x.second == min_size;
+    });
+
+  // FIXME: For some reason we seem to be outputting double the count
+  std::cout << min_size << " " << count << std::endl;
 
   return 0;
 }
