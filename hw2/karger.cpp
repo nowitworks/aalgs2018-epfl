@@ -1,3 +1,12 @@
+// Advanced Algorithms - Homework 2 - Problem 5
+//
+// Team name: algo@epfl
+//
+// - Rodrigo Andre Moreira Bernardo
+// - Joao Pinto Silveira
+// - Marin Gabriel Thiercelin
+//
+
 #include <algorithm>
 #include <cmath>
 #include <functional>
