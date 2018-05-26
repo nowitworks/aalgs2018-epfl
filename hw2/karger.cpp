@@ -1,4 +1,9 @@
+#include <algorithm>
+#include <cmath>
 #include <iostream>
+#include <numeric>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 struct subset {
@@ -6,30 +11,32 @@ struct subset {
   int rank;
 };
 
-class sets {
-  std::vector<subset> _subsets;
-public:
+struct sets {
+  std::vector<subset> ss;
+
   sets(int n) {
+    ss.reserve(n);
+
     for (int i = 0; i < n; i++) {
-      _subsets[i].parent = i;
-      _subsets[i].rank = 0;
+      ss[i].parent = i;
+      ss[i].rank = 0;
     }
   }
 
   int rank(int x) const {
-    return _subsets[x].rank;
+    return ss[x].rank;
   }
 
   void rank(int x, int r) {
-    _subsets[x].rank = r;
+    ss[x].rank = r;
   }
 
   int parent(int x) const {
-    return _subsets[x].parent;
+    return ss[x].parent;
   }
 
   void parent(int x, int p) {
-    _subsets[x].parent = p;
+    ss[x].parent = p;
   }
 
   void set_union(int x, int y) {
@@ -55,36 +62,80 @@ public:
   }
 };
 
-struct spec {
+struct solver {
   int n, m;
 
   // Edges
   std::vector<int> src;
   std::vector<int> dst;
 
-  spec() {
+  // Permutation
+  std::vector<int> pi;
+
+  // Cut
+  std::vector<int> solution_src;
+  std::vector<int> solution_dst;
+
+  solver() {
     std::cin >> n;
     std::cin >> m;
 
     src.reserve(m);
     dst.reserve(m);
+    pi.reserve(m);
 
     for (int i = 0; i < m; i++) {
       std::cin >> src[i];
       std::cin >> dst[i];
+      pi[i] = i;
+    }
+
+  }
+
+  void run() {
+    std::random_shuffle(std::begin(pi), std::end(pi));
+
+    sets vertices(n);
+
+    for (int i = 0, j = 0; i < m && j < n - 2; i++) {
+      int u = src[pi[i]], v = dst[pi[i]];
+
+      if (vertices.find(u - 1) != vertices.find(v - 1)) {
+        j++;
+        vertices.set_union(u - 1, v - 1);
+      }
+    }
+
+    for (int i = 0; i < m; i++) {
+      int u = src[pi[i]], v = dst[pi[i]];
+
+      if (vertices.find(u - 1) != vertices.find(v - 1)) {
+        solution_src.push_back(u);
+        solution_dst.push_back(v);
+      }
     }
   }
 };
 
 int main () {
-  spec s;
+  solver solver;
+  int n = solver.n;
 
-  std::cout << s.n << " " << s.m << "\n";
+  // using cut = std::pair<std::vector<int>, std::vector<int>>;
+  // std::unordered_map<cut, int> sizes;
 
-  for (int i = 0; i < s.m; i++) {
-    std::cout << "(" << s.src[i] << "," << s.dst[i] << ")";
+  std::vector<int> sizes;
+  sizes.reserve(n * n * ceil(log(n)));
+
+  for (int i = 0; i < n * n * ceil(log(n)); i++) {
+    solver.run();
+    sizes[i] = solver.solution_src.size();
+
+    // auto cut_ = std::make_pair(solver.solution_src, solver.solution_dst);
+    // sizes[cut_] = solver.solution_src.size();
   }
 
-  std::cout << std::endl;
+  std::cout << *std::min_element(std::begin(sizes), std::end(sizes)) << std::endl;
+
   return 0;
 }
