@@ -74,14 +74,19 @@ def gauss_el(matrix, p=prime):
 	n = len(matrix)
 	
 	for i in range(n):
-		
+
+		# print(i,".1")
+		# print_matrix(M)
+
 		# Find max in column
+		# TODO: replace abs with mod
 		max_el = abs(M[i][i])
 		max_row = i
 		for k in range(i+1,n):
 			if abs(M[k][i]) > max_el:
-				max_el = M[k][i]
+				max_el = abs(M[k][i])
 				max_row = k
+		
 		
 		# Swap max with current row
 		M[max_row], M[i] = M[i], M[max_row]
@@ -90,7 +95,7 @@ def gauss_el(matrix, p=prime):
 		for k in range(i+1,n):
 			c = - mod_div(M[k][i], M[i][i], p)
 			for j in range(i, n):
-				M[k][j] = mod_add(M[k][j], mod_mul(M[i][j], c, p), p) #0 if i == j else mod_add(M[k][j], mod_mul(M[i][j], c, p), p)
+				M[k][j] = 0 if i == j else mod_add(M[k][j], mod_mul(M[i][j], c, p), p)
 
 	return M
 
@@ -106,23 +111,15 @@ def det_is_not_0(g_matrix):
 
 
 
-
 def main():
 	n, m, edges = read_input()
 
-	repetitions = m**3
+	repetitions = 1
 
 	for __ in range(repetitions):
 		M = build_matrix(n, edges, prime)
 		
-		print("Before Gauss")
-		print_matrix(M)
-		
 		M = gauss_el(M, prime)
-
-		print("After Gauss")
-		print_matrix(M)
-		print("--- --- --- --- --- --- ---")
 
 		if det_is_not_0(M):
 			print("YES")
