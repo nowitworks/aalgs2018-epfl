@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <numeric>
 #include <set>
@@ -127,16 +128,27 @@ struct solver {
   }
 };
 
-// FIXME: Takes account order of vectors
+// FIXME
 std::size_t hash_cut(std::vector<int> const &src, std::vector<int> const &dst) {
-  std::size_t seed = src.size();
+  std::vector<size_t> indexes;
+  indexes.reserve(src.size());
 
-  for(auto &i: src) {
-    seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  for (size_t i = 0; i != src.size(); ++i) {
+    indexes.push_back(i);
   }
 
-  for(auto &i: dst) {
-    seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  std::sort(indexes.begin(), indexes.end(), [&](auto &i, auto &j) {
+      return src[i] < src[j];
+    });
+
+  std::size_t seed = src.size();
+
+  for(size_t i = 0; i < src.size(); i++) {
+    seed ^= src[indexes[i]] + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  for(size_t i = 0; i < src.size(); i++) {
+    seed ^= dst[indexes[i]] + 0x9e3779b9 + (seed << 6) + (seed >> 2);
   }
 
   return seed;
@@ -145,15 +157,17 @@ std::size_t hash_cut(std::vector<int> const &src, std::vector<int> const &dst) {
 int main () {
   solver solver;
   int n = solver.n;
+  double constant = 1;
+  int iterations = n * n * ceil(constant * log(n));
 
   std::unordered_map<std::size_t, int> sizes;
-  sizes.reserve(n * n * ceil(log(n)));
+  sizes.reserve(iterations);
 
-  for (int i = 0; i < n * n * ceil(log(n)); i++) {
+  for (int i = 0; i < iterations; i++) {
     solver.run();
 
     auto key = hash_cut(solver.solution_src, solver.solution_dst);
-    sizes[key ] = solver.solution_src.size();
+    sizes[key] = solver.solution_src.size();
   }
 
   int min_size = std::min_element(std::begin(sizes), std::end(sizes), [&](auto &l, auto &r) -> bool {
@@ -164,7 +178,6 @@ int main () {
       return x.second == min_size;
     });
 
-  // FIXME: For some reason we seem to be outputting double the count
   std::cout << min_size << " " << count << std::endl;
 
   return 0;
